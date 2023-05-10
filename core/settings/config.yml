@@ -1,0 +1,22 @@
+MnistDDPM:
+  n_steps: 200
+  min_beta: 0.001
+  max_beta: 0.02
+  device: null
+  image_chw: [1, 28, 28]
+
+
+Scheduler:
+  max_timesteps: 999
+
+
+MNIST_Dataset:
+  is_train: true
+  batch_size: 8
+  shuffle: false
+
+
+MNIST_Training:
+  image_size: 28
+  channels: 1
+  epochs: 5
