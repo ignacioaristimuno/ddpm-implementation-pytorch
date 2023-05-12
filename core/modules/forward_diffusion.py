@@ -60,8 +60,7 @@ class Scheduler:
             self.betas * (1.0 - alphas_cumprod_prev) / (1.0 - alphas_cumprod)
         )
 
-    @staticmethod
-    def _extract_values(a: Tensor, t: Tensor, x_shape):
+    def _extract_values(self, a: Tensor, t: Tensor, x_shape):
         batch_size = t.shape[0]
         out = a.gather(-1, t.cpu())
         return out.reshape(batch_size, *((1,) * (len(x_shape) - 1))).to(self.device)

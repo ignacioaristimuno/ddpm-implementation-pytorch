@@ -11,6 +11,11 @@ import math
 import torch
 from torch import nn
 
+from core.settings.logger import custom_logger
+
+
+logger = custom_logger("U-Net")
+
 
 class SinusoidalPositionEmbeddings(nn.Module):
     """
@@ -42,7 +47,7 @@ class ConvBlock(nn.Module):
 
     def __init__(self, dim, dim_out, groups=8):
         super().__init__()
-        self.proj = nn.Conv2d(dim, dim_out, 3, padding=1)
+        self.proj = nn.Conv2d(dim, dim_out, kernel_size=3, padding=1)
         self.norm = nn.GroupNorm(groups, dim_out)  # Similar to BatchNorm
         self.act = nn.SiLU()
 
@@ -164,17 +169,21 @@ class LinearAttention(nn.Module):
 class UNet(nn.Module):
     def __init__(
         self,
-        image_size,  # image_size
+        image_size,
+        init_dim: int = None,
+        out_dim: int = None,
         dim_mults=(1, 2, 4, 8),
         channels=3,
         with_time_emb=True,
         resnet_block_groups=8,
     ):
         super().__init__()
-        init_dim = image_size // 3 * 2
-        self.init_conv = nn.Conv2d(channels, init_dim, 7, padding=3)
+        if not init_dim:
+            init_dim = image_size // 3 * 2
+        self.init_conv = nn.Conv2d(channels, init_dim, kernel_size=7, padding=3)
 
         dims = [init_dim, *map(lambda m: image_size * m, dim_mults)]
+        logger.info(f"dims: {dims}")
         in_out = list(zip(dims[:-1], dims[1:]))
 
         resnet_block = partial(ResNetBlock, groups=resnet_block_groups)
@@ -234,6 +243,8 @@ class UNet(nn.Module):
                 )
             )
 
+        if not out_dim:
+            out_dim = channels
         self.final_conv = nn.Sequential(
             resnet_block(image_size, image_size), nn.Conv2d(image_size, channels, 1)
         )

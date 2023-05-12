@@ -1,10 +1,10 @@
 import torch
 from torch import Tensor
-from torch.optim import Adam, Optimizer
+from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 from tqdm import tqdm
-from typing import List, Tuple
+from typing import List
 
 from core.datasets.mnist_dataset import get_mnist_dataloader
 from core.modules.forward_diffusion import Scheduler
@@ -53,10 +53,10 @@ class DiffusionTrainer:
         model.to(self.device)
         diffusion_loss = ReverseDiffusionLoss(loss_fn)
         for epoch in range(self.epochs):
-            for step, batch in enumerate(dataloader):
+            for step, (images, labels) in enumerate(dataloader):
                 # Sample t uniformally for every example in the batch
-                batch_size = batch.shape[0]
-                batch = batch.to(self.device)
+                batch_size = images.shape[0]
+                batch = images.to(self.device)
                 timesteps = torch.randint(
                     0, scheduler.max_timesteps, (batch_size,), device=self.device
                 ).long()
@@ -167,13 +167,11 @@ dataloader = get_mnist_dataloader(**get_config("MNIST_Dataset"))
 
 # Define UNet model
 model = UNet(
-    image_size=img_size,
-    channels=channels,
-    dim_mults=(1, 2, 4),
+    image_size=img_size, channels=channels, dim_mults=(1, 2, 4), resnet_block_groups=7
 )
 
 # Scheduler
-max_timesteps = config["Scheduler"]
+max_timesteps = get_config("Scheduler")["max_timesteps"]
 scheduler = Scheduler(max_timesteps)
 
 # Optimizer and Loss
@@ -183,8 +181,8 @@ loss_fn = LossFunction.HUBER
 # Trainer
 trainer_configs = {
     "epochs": get_config("MNIST_Dataset")["batch_size"],
-    "img_size": config["img_size"],
-    "img_schannelsize": config["channels"],
+    "img_size": img_size,
+    "channels": channels,
     "save_and_sample_every": 1000,
 }
 trainer = DiffusionTrainer(**trainer_configs)
