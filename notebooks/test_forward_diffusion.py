@@ -33,5 +33,5 @@ def test_forward_diffusion(timestep: int, url: str = None) -> Image:
     return noisy_images
 
 
-timestep = 40
+timestep = 999
 noisy_images = test_forward_diffusion(timestep, DUMMY_IMAGE_URL)
